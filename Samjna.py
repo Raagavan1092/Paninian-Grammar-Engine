@@ -1,4 +1,4 @@
-from Basics import getBaseSvara, getPratyahara, d_sthanamap, d_abhyatnamap
+from Basics import getBaseSvara, getPratyahara, doPadaVigraha, d_sthanamap, d_abhyatnamap, Cadi, Pradi, getSvaraVariations
 
 
 # Samjna checks
@@ -9,6 +9,11 @@ def isHrsva(letter1: str) -> bool:
 
 def isDeergha(letter1: str) -> bool:
     if letter1 in [j for i in ['आ', 'ई', 'ऊ', 'ॠ', 'ए', 'ओ', 'ऐ', 'औ'] for j in getPratyahara(i + 'त्')]:
+        return True
+    return False
+
+def isPluta(letter1: str) -> bool:
+    if letter1 in [j for i in ['अ', 'इ', 'उ', 'ऋ', 'आ', 'ई', 'ऊ', 'ॠ', 'ए', 'ओ', 'ऐ', 'औ'] for j in getSvaraVariations(i, 'Pluta')]:
         return True
     return False
 
@@ -44,7 +49,15 @@ def isAnunasika(letter: str) -> bool:
     if chr(2305) in letter or letter[0] in ['ङ', 'ञ', 'ण', 'न', 'म']:
         return True
 
-# The ultimate samjna
+def isNipata(word: str) -> bool:
+    if word in Cadi + Pradi:
+        return True
+
+def isPragruhya(word: str) -> bool:
+    l_word = doPadaVigraha(word)
+    if isNipata(word) and (len([i for i in l_word if i in getPratyahara('अच्')]) == 1 or l_word[-1] == 'ओ'):
+        return True
+
 def isPadam(expr: str) -> bool:
     pass
 
