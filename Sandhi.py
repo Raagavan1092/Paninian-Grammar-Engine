@@ -2,7 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Union
 
-from Basics import getPratyahara, getBaseSvara, getSavarnas, getSvaraVariations, doPadaVigraha, doVarnaMelana, d_abhyatnamap, d_bahyatnamap, d_sthanamap
+from Basics import getPratyahara, getBaseSvara, getSavarnas, getSvaraVariations, doPadaVigraha, doVarnaMelana, d_abhyatnamap, d_bahyatnamap, d_sthanamap, Cadi, Pradi, Uryadi
 from Main import Padam
 from Samjna import isHrsva, isAnunasika, isSavarna, getGunas, getVriddhis, isDeergha, isPluta, isPragruhya
 from Utilities import flatten_and_set
@@ -42,12 +42,10 @@ class SandhiPrakriya:
 
     def add_entry(self, sutram, lakshyam, vishaya, actiontype, expr):
         self.l_prakriya.append(SutraAction(sutram, lakshyam, vishaya, actiontype, expr))
-        # self.l_prakriya.append({"Sutram": sutram, "Lakshyam": lakshyam, "Action": action, "ActionType": actiontype, "Exp": expr})
 
     def edit_entry(self, new_set, ind=None, row_set=None):
         if ind:
             self.l_prakriya[ind] = SutraAction(new_set[0], new_set[1], new_set[2], new_set[3], new_set[4])
-            # self.l_prakriya[ind] = {"Sutram": new_set[0], "Lakshyam": new_set[1], "Action": new_set[2], "ActionType": new_set[3], "Exp": new_set[4]}
         elif row_set:
             pass
 
@@ -344,10 +342,6 @@ def hasSiddhaAhead(lexp1, lexp2, ind, c_sutram, no_vikalpa, prakriya):
             if lrightexp == lexp1 + lexp2:
                 return True
 
-        # # उपदेशेऽजनुनासिक इत्
-        # if i + 1 == padanta and doVarnaMelana(l_check[i: i + 2]) == 'रुँ' and (i, 'रुँ', 'Adesha') in prakriya.l_lak_vis_types and '1.3.09' < c_sutram:
-        #     return True
-
     else:
         return False
 
@@ -427,8 +421,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
             l_exp2 = list(expr2)
         l_exp = l_exp1 + l_exp2
     padanta = len(l_exp1) - 1 if at_padanta else None
-    # if not padanta and not l_exp2:
-    #     raise ValueError("Pass as two elements when the whole word is not a padam")
+    word1, word2 = doVarnaMelana(l_exp1), doVarnaMelana(l_exp2)
 
     prak_set = prakriya
     if not prakriya:
@@ -440,46 +433,38 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         print(l_exp[i - 1], l_exp[i], l_exp[i + 1])
 
         # ऋत्यकः
-        if i == padanta and l_exp[i] in getPratyahara('अक्') and l_exp[i + 1] in getPratyahara('ऋत्') and (i, '6.1.128') not in prak_set.l_lak_sutrams and not no_vikalpa:
+        if i == padanta and l_exp[i] in getPratyahara('अक्') and l_exp[i + 1] in getPratyahara('ऋत्') and ((i,), '6.1.128') not in prak_set.l_lak_sutrams and not no_vikalpa:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.128')
             if l_rightexp == l_exp:
                 v_pset = prak_set.fork_new_with_entry('6.1.128', i, None, 'AdeshaPrakrutiVikalpa', list(l_exp))
-                prak_set.add_entry('6.1.128', i, l_exp[i], 'AdeshaPrakrutibhava', l_exp)
-
-                # res1 = doSandhi(l_exp[:i + 1], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
-                # res2 = doSandhi(l_exp[i + 1:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
-                # if isinstance(res1, tuple) and isinstance(res2, tuple):
-                #     result = tuple([j + k for j in flatten_and_set(res1) for k in flatten_and_set(res2)])
-                # elif isinstance(res1, str) and isinstance(res2, tuple):
-                #     result = tuple([res1 + j for j in flatten_and_set(res2)])
-                # elif isinstance(res2, str) and isinstance(res1, tuple):
-                #     result = tuple([j + res2 for j in flatten_and_set(res1)])
-                # else:
-                #     result = res1 + res2
+                prak_set.add_entry('6.1.128', (i,), l_exp[i], 'AdeshaPrakrutibhava', l_exp)
 
                 return doSandhi(l_exp1, l_exp2, at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set), doSandhi(l_exp1, l_exp2, at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=v_pset)
 
         # इकोऽसवर्णे शाकल्यस्य ह्रस्वश्च
-        if i == padanta and l_exp[i] in getPratyahara('इक्') and l_exp[i + 1] in getPratyahara('अच्') and l_exp[i + 1] and not isSavarna(l_exp[i], l_exp[i + 1]) and (i, '6.1.127') not in prak_set.l_lak_sutrams and not no_vikalpa:
+        if i == padanta and l_exp[i] in getPratyahara('इक्') and l_exp[i + 1] in getPratyahara('अच्') and l_exp[i + 1] and not isSavarna(l_exp[i], l_exp[i + 1]) and ((i,), '6.1.127') not in prak_set.l_lak_sutrams and not no_vikalpa:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.127')
             if l_rightexp == l_exp:
-                v_pset = prak_set.fork_new_with_entry('6.1.127', i, None, 'AdeshaPrakrutiVikalpa', list(l_exp))
+                v_pset = prak_set.fork_new_with_entry('6.1.127', (i,), None, 'AdeshaPrakrutiVikalpa', list(l_exp))
                 if isDeergha(l_exp[i]):
                     l_exp[i] = getSvaraVariations(getBaseSvara(l_exp[i]), 'Hrsva')[0]
-                prak_set.add_entry('6.1.127', i, l_exp[i], 'AdeshaPrakrutibhava', l_exp)
+                prak_set.add_entry('6.1.127', (i,), l_exp[i], 'AdeshaPrakrutibhava', l_exp)
 
                 return doSandhi(l_exp1, l_exp2, at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set), doSandhi(l_exp1, l_exp2, at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=v_pset)
 
         # प्लुतप्रगृह्या अचि नित्यम्
-        if (isPluta(l_exp[i]) or isPragruhya(doVarnaMelana(l_exp1))) and l_exp[i + 1] in getPratyahara('अच्') and (i, '6.1.125') not in prak_set.l_lak_sutrams:
-            prak_set.add_entry('6.1.125', i, l_exp[i], 'Prakrutibhava', l_exp)
+        if l_exp[i + 1] in getPratyahara('अच्') and ((isPluta(l_exp[i]) and ((i,), '6.1.125') not in prak_set.l_lak_sutrams) or (isPragruhya(word1) and (tuple(i for i in range(len(l_exp1))), '6.1.125') not in prak_set.l_lak_sutrams)):
+            if isPluta(l_exp[i]):
+                prak_set.add_entry('6.1.125', (i,), l_exp[i], 'Prakrutibhava', l_exp)
+            else:
+                prak_set.add_entry('6.1.125', tuple(i for i in range(len(l_exp1))), l_exp[i], 'Prakrutibhava', l_exp)
 
-            return doSandhi(l_exp1[:i + 1], l_exp2[i + 1:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
+            return doSandhi(l_exp1, l_exp2, at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
 
         # इको यणचि
         if l_exp[i] in getPratyahara('इक्') and l_exp[i + 1] in getPratyahara('अच्') and l_exp[i + 1] not in getSavarnas(getBaseSvara(l_exp[i])) and (i, '6.1.77') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.77')
-            if l_rightexp == l_exp and not any(i == j[0] and 'Prakrutibhava' in j[2] for j in prak_set.l_lak_vis_types):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = getAdeshaBySthana([l_exp[i]], 'यण्')
                 prak_set.add_entry('6.1.77', i, l_exp[i], 'Adesha', l_exp)
 
@@ -491,7 +476,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # एङः पदान्तादति
         if i == padanta and l_exp[i] in getPratyahara('एङ्') and l_exp[i + 1] in getPratyahara('अत्') and ((i, i + 1), '6.1.109') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.109')
-            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 prak_set.add_entry('6.1.109', (i, i + 1), l_exp[i], 'Adesha', l_exp)
 
                 return doSandhi(l_exp[:i + 1], l_exp[i + 2:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
@@ -499,7 +484,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # एचोऽयवायावः
         if l_exp[i] in getPratyahara('एच्') and l_exp[i + 1] in getPratyahara('अच्') and (i, '6.1.78') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.78')
-            if l_rightexp == l_exp and not any(i == j[0] and 'Prakrutibhava' in j[2] for j in prak_set.l_lak_vis_types) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 adesha = doPadaVigraha({'ए': 'अय्', 'ओ': 'अव्', 'ऐ': 'आय्', 'औ': 'आव्'}[getBaseSvara(l_exp[i])])
                 l_exp = l_exp[:i] + adesha + l_exp[i + 1:]
                 prak_set.add_entry('6.1.78', i, adesha, 'Adesha', l_exp)
@@ -513,7 +498,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # वृद्धिरेचि
         if l_exp[i] in getSavarnas('अ') and l_exp[i + 1] in getPratyahara('एच्') and ((i, i + 1), '6.1.88') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.88')
-            if l_rightexp == l_exp and not any(i == j[0] and 'Prakrutibhava' in j[2] for j in prak_set.l_lak_vis_types) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 adesha = [getAdeshaBySthana(['अ', l_exp[i + 1]], getVriddhis(False))]
                 if adesha == ['आ'] and l_exp[i + 1] in ['ऋ', 'ऌ']:
                     adesha.append(getAdeshaBySthana(l_exp[i + 1], 'र'))  # उरण् रपरः (1.1.51)
@@ -532,7 +517,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # अकः सवर्णे दीर्घः
         if l_exp[i] in getPratyahara('अक्') and l_exp[i + 1] in getSavarnas(l_exp[i][0]) and ((i, i + 1), '6.1.101') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.101')
-            if l_rightexp == l_exp and not any(i == j[0] and 'Prakrutibhava' in j[2] for j in prak_set.l_lak_vis_types) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 adesha = [getSvaraVariations(getBaseSvara(l_exp[i]), 'Deergha')[0]]
                 l_exp = l_exp[:i] + adesha + l_exp[i + 2:]
                 prak_set.add_entry('6.1.101', (i, i + 1), adesha, 'Adesha', l_exp)
@@ -545,7 +530,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # आद्गुणः
         if l_exp[i] in getSavarnas('अ') and l_exp[i + 1] in getPratyahara('अच्') and ((i, i + 1), '6.1.87') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.87')
-            if l_rightexp == l_exp and not any(i == j[0] and 'Prakrutibhava' in j[2] for j in prak_set.l_lak_vis_types) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 adesha = [getAdeshaBySthana(['अ', l_exp[i + 1]], getGunas(False))]
                 if adesha == ['अ'] and l_exp[i + 1] in ['ऋ', 'ऌ']:
                     adesha.append(getAdeshaBySthana([l_exp[i + 1]], 'र'))  # उरण् रपरः (1.1.51)
@@ -564,7 +549,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # छे च
         if isHrsva(l_exp[i]) and l_exp[i + 1] == 'छ्' and (i, '6.1.73') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.73')
-            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp.insert(i + 1, 'त्')
                 prak_set.add_entry('6.1.73', i, 'तुक्', 'Agama', l_exp)
 
@@ -577,7 +562,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # दीर्घात्, पदान्ताद्वा
         if isDeergha(l_exp[i]) and l_exp[i + 1] == 'छ्' and ((i != padanta and (i, '6.1.75') not in prak_set.l_lak_sutrams) or (i == padanta and (i, '6.1.76') not in prak_set.l_lak_sutrams and not no_vikalpa)):
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.75')
-            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp.insert(i + 1, 'त्')
 
                 if i == padanta and not no_vikalpa:
@@ -593,7 +578,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # अतो रोरप्लुतादप्लुते, हशि च
         if i + 1 == padanta and doVarnaMelana(l_exp[i: i + 2]) == 'रुँ' and l_exp[i - 1] in getPratyahara('अत्') and (l_exp[i + 2] in getPratyahara('अत्') or l_exp[i + 2] in getPratyahara('हश्')) and (i, '6.1.113') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '6.1.113')
-            if (i, 'रुँ', 'Adesha') in prak_set.l_lak_vis_types or (l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam)):
+            if (i, 'रुँ', 'Adesha') in prak_set.l_lak_vis_types or (l_rightexp == l_exp and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam)):
                 l_exp[i] = 'उ'
                 l_exp.pop(i + 1)
                 if l_exp[i + 1] in getPratyahara('अत्'):
@@ -606,7 +591,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # संयोगान्तस्य लोपः
         if i == padanta and (l_exp[i] in getPratyahara('हल्') and l_exp[i - 1] in getPratyahara('हल्')) and i != 0 and l_exp[i] not in getPratyahara('यण्') and (i, '8.2.23') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.2.23')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.23', no_vikalpa, prak_set) and 'Agama' not in prak_set.get_all_actions('Type') and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.23', no_vikalpa, prak_set) and 'Agama' not in prak_set.get_all_actions('Type') and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 lupta = l_exp.pop(i)
                 prak_set.add_entry('8.2.23', i, lupta, 'Lopa', l_exp)
 
@@ -615,7 +600,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # चोः कुः
         if l_exp[i] in getPratyahara('चु') and (i == padanta or l_exp[i + 1] in getPratyahara('झल्')) and (i, '8.2.30') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.2.30')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.30', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.30', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = getPratyahara('कु')[getPratyahara('चु').index(l_exp[i])]
                 prak_set.add_entry('8.2.30', i, l_exp[i], 'Adesha', l_exp)
 
@@ -627,7 +612,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # झलां जशोऽन्ते
         if i == padanta and l_exp[i] in getPratyahara('झल्') and l_exp[i] not in ['श्', 'स्', 'ह्'] and (i, '8.2.39') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.2.39')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.39', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.39', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = getAdeshaBySthana([l_exp[i]], 'जश्')
                 prak_set.add_entry('8.2.39', i, l_exp[i], 'Adesha', l_exp)
 
@@ -636,7 +621,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # ससजुषो रुः  --
         if i == padanta and l_exp[i] == 'स्' and (i, '8.2.66') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.2.66')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.66', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.2.66', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = 'र्'
                 l_exp.insert(i + 1, 'उँ')
                 prak_set.add_entry('8.2.66', i, 'रुँ', 'Adesha', l_exp)
@@ -646,7 +631,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # नश्छव्यप्रशान्  --
         if i == padanta and l_exp[i] == 'न्' and l_exp[i + 1] in getPratyahara('छव्') and l_exp[i + 2] in getPratyahara('अम्') and (i, '8.3.07') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.07')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.07', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.07', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] =  'र्'
                 l_exp.insert(i + 1, 'उँ')
                 prak_set.add_entry('8.3.07', i, 'रुँ', 'Adesha', l_exp)
@@ -665,7 +650,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # ढो ढे लोपः
         if i == padanta and l_exp[i] == 'ढ्' and l_exp[i + 1] == 'ढ्' and (i, '8.3.13') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.13')
-            if (l_rightexp == l_exp or (i + 1, '8.4.41') in prak_set.l_lak_sutrams) and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.13', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if (l_rightexp == l_exp or (i + 1, '8.4.41') in prak_set.l_lak_sutrams) and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.13', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 lupta = l_exp.pop(i)
                 prak_set.add_entry('8.3.13', i, lupta, 'Lopa', l_exp)
 
@@ -678,7 +663,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # रो रि
         if i == padanta and l_exp[i] == 'र्' and l_exp[i + 1] == 'र्' and (i, '8.3.14') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.14')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.14', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.14', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 lupta = l_exp.pop(i)
                 prak_set.add_entry('8.3.14', i, lupta, 'Lopa', l_exp)
 
@@ -691,7 +676,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # खरवसानयोः विसर्जनीयः
         if i == padanta and l_exp[i] == 'र्' and l_exp[i + 1] in getPratyahara('खर्') and (i, '8.3.15') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.15')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.15', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.15', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = chr(2307)
                 prak_set.add_entry('8.3.15', i, l_exp[i], 'Adesha', l_exp)
 
@@ -700,7 +685,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # भोभगोअघोअपूर्वस्य योऽशि
         if i + 1 == padanta and doVarnaMelana(l_exp[i: i + 2]) == 'रुँ' and l_exp[i - 1] in getSavarnas('अ') and i != 0 and l_exp[i + 2] in getPratyahara('अश्') and (i, '8.3.17') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.17')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i + 1, '8.3.17', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i + 1, '8.3.17', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = 'य्'
                 l_exp.pop(i + 1)
                 prak_set.add_entry('8.3.17', i, l_exp[i], 'Adesha', l_exp)
@@ -710,7 +695,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # लोपः शाकल्यस्य
         if i == padanta and (l_exp[i] in ['य्', 'व्'] and l_exp[i + 1] in getPratyahara('अश्')) and l_exp[i - 1] in getSavarnas('अ') and i != 0 and not no_vikalpa and (i, '8.3.19') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.19')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.19', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.19', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.3.19', i, None, 'LopaVikalpa', list(l_exp))
                 lupta = l_exp.pop(i)
                 prak_set.add_entry('8.3.19', i, lupta, 'Lopa', l_exp)
@@ -720,7 +705,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # हलि सर्वेषाम्
         if i == padanta and l_exp[i] == 'य्' and l_exp[i + 1] in getPratyahara('हल्') and (i, '8.3.22') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.22')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.22', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.22', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 lupta = l_exp.pop(i)
                 prak_set.add_entry('8.3.22', i, lupta, 'Lopa', l_exp)
 
@@ -729,7 +714,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # मोऽनुस्वारः
         if i == padanta and l_exp[i] == 'म्' and l_exp[i + 1] in getPratyahara('हल्') + ('ह्',) and (i, '8.3.23') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.23')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.23', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.23', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = chr(2306)
                 prak_set.add_entry('8.3.23', i, l_exp[i], 'Adesha', l_exp)
 
@@ -738,7 +723,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # नश्चापदान्तस्य झलि
         if i != padanta and l_exp[i] in ['न्', 'म्'] and l_exp[i + 1] in getPratyahara('झल्') and (i, '8.3.24') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.24')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.24', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.24', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = chr(2306)
                 prak_set.add_entry('8.3.24', i, l_exp[i], 'Adesha', l_exp)
 
@@ -750,7 +735,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # हे मपरे वा
         if i == padanta and ord(l_exp[i][0]) == 2306 and l_exp[i + 1] == 'ह्' and l_exp[i + 2] in ['म्', 'य्', 'व्', 'ल्'] and not no_vikalpa and (i, '8.3.26') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.26')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.26', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.26', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 if l_exp[i + 2] == 'म्':
                     l_exp[i] = 'म्'
                 else:
@@ -762,7 +747,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # नपरे नः
         if i == padanta and ord(l_exp[i][0]) == 2306 and l_exp[i + 1] == 'ह्' and l_exp[i + 2] == 'न्' and not no_vikalpa and (i, '8.3.27') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.27')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.27', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.27', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = 'न्'
                 prak_set.add_entry('8.3.27', i, l_exp[i], 'Adesha', l_exp)
 
@@ -771,7 +756,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # ङ्णोः कुक्टुक् शरि
         if i == padanta and l_exp[i] in ['ङ्', 'ण्'] and l_exp[i + 1] in getPratyahara('शर्') and not no_vikalpa and (i, '8.3.28') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.28')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.28', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.28', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.3.28', i, None, 'AgamaVikalpa', list(l_exp))
                 l_exp.insert(i + 1, ['क्', 'ट्'][['ङ्', 'ण्'].index(l_exp[i])])
                 prak_set.add_entry('8.3.28', i, doVarnaMelana([l_exp[i + 1]] + ['उ', 'क्']), 'Agama', l_exp)
@@ -781,7 +766,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # डः सि धुट्, नश्च
         if i == padanta and l_exp[i] in ['ड्', 'न्'] and l_exp[i + 1] == 'स्' and not no_vikalpa and ((l_exp[i] == 'ड्' and (i, '8.3.29') not in prak_set.l_lak_sutrams) or (l_exp[i] == 'न्' and (i, '8.3.30') not in prak_set.l_lak_sutrams)):
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.29')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.29', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.29', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp.insert(i + 1, 'ध्')
                 if l_exp[i] == 'ड्':
                     v_pset = prak_set.fork_new_with_entry('8.3.29', i + 1, None, 'AgamaVikalpa', list(l_exp))
@@ -795,7 +780,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # शि तुक्
         if i == padanta and l_exp[i] == 'न्' and l_exp[i + 1] == 'श्' and not no_vikalpa and (i, '8.3.31') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.31')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.31', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.31', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.3.31', i, None, 'AgamaVikalpa', list(l_exp))
                 l_exp.insert(i + 1, 'त्')
                 prak_set.add_entry('8.3.31', i, 'तुक्', 'Agama', l_exp)
@@ -805,16 +790,26 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # ङमो ह्रस्वादचि ङमुण्नित्यम्
         if i == padanta and isHrsva(l_exp[i - 1]) and l_exp[i] in getPratyahara('ङम्') and l_exp[i + 1] in getPratyahara('अच्') and (i, '8.3.32') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.32')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.32', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.32', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp.insert(i, l_exp[i])
                 prak_set.add_entry('8.3.32', i + 1, doVarnaMelana([l_exp[i]] + ['उ', 'ट्']), 'Agama', l_exp)
+
+                return doSandhi(l_exp[:i + 1], l_exp[i + 1:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
+
+        # मय उञो वो वा
+        if i == padanta and l_exp[i] in getPratyahara('मय्') and word2 == 'उञ्' and (i, '8.3.33') not in prak_set.l_lak_sutrams:
+            l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.33')
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.33', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i + 1 in prak_set.l_prakriya[-1].Lakshyam):
+                l_exp[i + 1] = 'व्'
+                l_exp.pop()  # तस्य लोपः
+                prak_set.add_entry('8.3.33', i + 1, l_exp[i + 1], 'Adesha', l_exp)
 
                 return doSandhi(l_exp[:i + 1], l_exp[i + 1:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
 
         # विसर्जनीयस्य सः, शर्परे विसर्जनीयः, वा शरि
         if i == padanta and l_exp[i] == chr(2307) and l_exp[i + 1] in getPratyahara('खर्') and (i, '8.3.34') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.3.34')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.34', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.3.34', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 if l_exp[i + 2] in getPratyahara('शर्') and (i, '8.3.35') not in prak_set.l_lak_sutrams:
                     prak_set.add_entry('8.3.35', i, l_exp[i], 'Adesha', l_exp)
                     return doSandhi(l_exp[:i + 1], l_exp[i + 1:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
@@ -832,7 +827,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # स्तोः श्चुना श्चुः
         if (l_exp[i] in ['स्', 'त्', 'थ्', 'द्', 'ध्', 'न्'] and l_exp[i + 1] in ['श्', 'च्', 'छ्', 'ज्', 'झ्', 'ञ्']) or (l_exp[i + 1] in ['स्', 'त्', 'थ्', 'द्', 'ध्', 'न्'] and l_exp[i] in ['श्', 'च्', 'छ्', 'ज्', 'झ्', 'ञ्']) and (i, '8.4.40') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.40')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.40', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.40', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 if not (l_exp[i] == 'श्' and l_exp[i + 1] in ['त्', 'थ्', 'द्', 'ध्', 'न्']):
                     if l_exp[i] in ['स्', 'त्', 'थ्', 'द्', 'ध्', 'न्'] and l_exp[i + 1] in ['श्', 'च्', 'छ्', 'ज्', 'झ्', 'ञ्']:
                         l_exp[i] = ['श्', 'च्', 'छ्', 'ज्', 'झ्', 'ञ्'][['स्', 'त्', 'थ्', 'द्', 'ध्', 'न्'].index(l_exp[i])]
@@ -850,7 +845,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # ष्टुना ष्टुः
         if (l_exp[i] in ['स्', 'त्', 'थ्', 'द्', 'ध्', 'न्'] and l_exp[i + 1] in ['ष्', 'ट्', 'ठ्', 'ड्', 'ढ्', 'ण्']) or (l_exp[i + 1] in ['स्', 'त्', 'थ्', 'द्', 'ध्', 'न्'] and l_exp[i] in ['ष्', 'ट्', 'ठ्', 'ड्', 'ढ्', 'ण्']) and (i, '8.4.41') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.41')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.41', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.41', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 if l_exp[i] in getPratyahara('तु') and l_exp[i + 1] == 'ष्':
                     prak_set.add_entry('8.4.43', i, None, 'Nishedha', l_exp)
                 elif i == padanta and l_exp[i] in getPratyahara('टु') and l_exp[i + 1] in ['स्', 'त्', 'थ्', 'द्', 'ध्', 'न्']:
@@ -871,7 +866,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # यरोऽनुनासिके अनुनासिको वा
         if i == padanta and l_exp[i] in getPratyahara('यर्') and getSavarnas(l_exp[i]) and l_exp[i + 1] in ['ङ्', 'ञ्', 'ण्', 'न्', 'म्', 'य्ँ', 'व्ँ', 'ल्ँ'] and (i, '8.4.45') not in prak_set.l_lak_sutrams and not no_vikalpa:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.45')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.45', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.45', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.4.45', i, None, 'AdeshaVikalpa', list(l_exp))
                 l_exp[i] = getSavarnas(l_exp[i])[-1]
                 prak_set.add_entry('8.4.45', i, l_exp[i], 'Adesha', l_exp)
@@ -881,7 +876,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # अचो रहाभ्यां द्वे
         if i != padanta and l_exp[i - 2] in getPratyahara('अच्') + (chr(2306), ) and l_exp[i - 1] in ['र्', 'ह्'] and i >= 2 and l_exp[i] in getPratyahara('यर्') and not no_vikalpa and (i, '8.4.46') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.46')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.46', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.46', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.4.46', i, None, 'DvitvaVikalpa', list(l_exp))
                 l_exp.insert(i + 1, l_exp[i])  # doing dvitva
                 prak_set.add_entry('8.4.46', i, l_exp[i], 'Dvitva', l_exp)
@@ -895,7 +890,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # अनचि च
         if l_exp[i - 1] in getPratyahara('अच्') + (chr(2306), ) and i != 0 and l_exp[i] in getPratyahara('यर्') and l_exp[i + 1] not in getPratyahara('अच्') and not no_vikalpa and (i, '8.4.47') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.47')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.47', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.47', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.4.47', i, None, 'DvitvaVikalpa', list(l_exp))
                 l_exp.insert(i + 1, l_exp[i])  # doing dvitva
                 prak_set.add_entry('8.4.47', i, l_exp[i], 'Dvitva', l_exp)
@@ -909,7 +904,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # झलां जश् झशि
         if l_exp[i] in getPratyahara('झल्') and l_exp[i + 1] in getPratyahara('झश्') and (i, '8.4.53') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.53')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.53', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.53', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = getAdeshaBySthana([l_exp[i]], 'जश्')
                 prak_set.add_entry('8.4.53', i, l_exp[i], 'Adesha', l_exp)
 
@@ -921,7 +916,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # खरि च
         if l_exp[i] in getPratyahara('झल्') and l_exp[i + 1] in getPratyahara('खर्') and (i, '8.4.55') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.55')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.55', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.55', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = getAdeshaBySthana([l_exp[i]], 'चर्')
                 prak_set.add_entry('8.4.55', i, l_exp[i], 'Adesha', l_exp)
 
@@ -933,7 +928,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # अनुस्वारस्य ययि परसवर्णः,  वा पदान्तस्य
         if ord(l_exp[i][0]) == 2306 and l_exp[i + 1] in getPratyahara('यय्') and ((i != padanta and (i, '8.4.58') not in prak_set.l_lak_sutrams) or (i == padanta and (i, '8.4.59') not in prak_set.l_lak_sutrams and not no_vikalpa)):
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.58')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.58', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.58', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 adesha = getAdeshaBySthana([l_exp[i]], getSavarnas(l_exp[i + 1]))
                 if adesha:
                     v_pset = prak_set.fork_new_with_entry('8.4.59', i, None, 'AdeshaVikalpa', list(l_exp))
@@ -948,7 +943,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # तोर्लि
         if l_exp[i] in getPratyahara('तु') and l_exp[i + 1] == 'ल्' and (i, '8.4.60') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.60')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.60', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.60', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 l_exp[i] = getAdeshaBySthana([l_exp[i]], ['ल्', 'ल्ँ'])
                 prak_set.add_entry('8.4.60', i, l_exp[i], 'Adesha', l_exp)
 
@@ -960,7 +955,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # झयो होऽन्यतरस्याम्
         if l_exp[i - 1] in getPratyahara('झय्') and i != 0 and l_exp[i] == 'ह्' and (i, '8.4.62') not in prak_set.l_lak_sutrams and not no_vikalpa:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.62')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.62', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.62', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.4.62', i, None, 'AdeshaVikalpa', list(l_exp))
                 l_exp[i] = getAdeshaBySthana(['ह्'], getSavarnas(l_exp[i - 1]))
                 prak_set.add_entry('8.4.62', i, l_exp[i], 'Adesha', l_exp)
@@ -973,7 +968,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # शश्छोऽटि
         if l_exp[i - 1] in getPratyahara('झय्') and i != 0 and l_exp[i] == 'श्' and l_exp[i + 1] in getPratyahara('अम्') and (i, '8.4.63') not in prak_set.l_lak_sutrams and not no_vikalpa:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.63')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.63', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.63', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.4.63', i, None, 'AdeshaVikalpa', list(l_exp))
                 l_exp[i] = 'छ्'
                 prak_set.add_entry('8.4.63', i, l_exp[i], 'Adesha', l_exp)
@@ -986,7 +981,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # हलो यमां यमि लोपः
         if l_exp[i] in getPratyahara('यम्') and l_exp[i + 1] in getPratyahara('यम्') and l_exp[i - 1] in getPratyahara('हल्') and i != 0 and not no_vikalpa and (i, '8.4.64') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.64')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.64', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.64', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.4.64', i, None, 'LopaVikalpa', list(l_exp))
                 lupta = l_exp.pop(i)
                 prak_set.add_entry('8.4.64', i, lupta, 'Lopa', l_exp)
@@ -1000,7 +995,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         # झरो झरि सवर्णे
         if l_exp[i] in getPratyahara('झर्') and l_exp[i + 1] in getPratyahara('झर्') and l_exp[i + 1] in getSavarnas(l_exp[i]) and l_exp[i - 1] in getPratyahara('हल्') and i != 0 and not no_vikalpa and (i, '8.4.65') not in prak_set.l_lak_sutrams:
             l_rightexp = getValidRoopa(prak_set.l_sutrams, prak_set.l_exps, '8.4.65')
-            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.65', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i == prak_set.l_prakriya[-1].Lakshyam):
+            if l_rightexp == l_exp and not hasSiddhaAhead(l_exp1, l_exp2, i, '8.4.65', no_vikalpa, prak_set) and not (prak_set.l_prakriya and 'Prakrutibhava' in prak_set.l_prakriya[-1].Type and i in prak_set.l_prakriya[-1].Lakshyam):
                 v_pset = prak_set.fork_new_with_entry('8.4.65', i, None, 'LopaVikalpa', list(l_exp))
                 lupta = l_exp.pop(i)
                 prak_set.add_entry('8.4.65', i, lupta, 'Lopa', l_exp)
@@ -1011,15 +1006,15 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
                 else:
                     return doSandhi(l_exp[:i], l_exp[i:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set), doSandhi(l_exp1, l_exp2, at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=v_pset)
 
-        # उपदेशे अजनुनासिक इत्
-        if i + 1 == padanta and doVarnaMelana(l_exp[i: i + 2]) == 'रुँ' and (i, 'रुँ', 'Adesha') in prak_set.l_lak_vis_types:
+        # तस्य लोपः
+        if (i, 'रुँ', 'Adesha') in prak_set.l_lak_vis_types[-1:]:
             lupta = l_exp.pop(i + 1)
             prak_set.add_entry('1.3.09', i + 1, lupta, 'Lopa', l_exp)  # तस्य लोपः
             return doSandhi(l_exp[:i + 1], l_exp[i + 1:], at_padanta=at_padanta, no_vikalpa=no_vikalpa, prakriya=prak_set)
     else:
         # चोः कुः
         if l_exp[i + 1] in getPratyahara('चु') and (i + 1, '8.2.30') not in prak_set.l_lak_sutrams:
-            l_exp[i + 1] = getPratyahara('कु')[getPratyahara('चु').index(l_exp[i])]
+            l_exp[i + 1] = getPratyahara('कु')[getPratyahara('चु').index(l_exp[i + 1])]
             prak_set.add_entry('8.2.30', i + 1, l_exp[i + 1], 'Adesha', l_exp)
 
         # झलां जशोऽन्ते
@@ -1041,7 +1036,7 @@ def doSandhi(expr1: Union[str, list, tuple, Padam], expr2: Union[str, list, tupl
         return doVarnaMelana(l_exp)
 
 if __name__ == '__main__':
-    res = doSandhi('हरिस्', 'तस्य', no_vikalpa=False)
+    res = doSandhi('किम्व्', 'उक्तम्', no_vikalpa=False)
     if isinstance(res, tuple):
         print(flatten_and_set(res))
     else:

@@ -1,4 +1,4 @@
-from Basics import getBaseSvara, getPratyahara, doPadaVigraha, d_sthanamap, d_abhyatnamap, Cadi, Pradi, getSvaraVariations
+from Basics import getBaseSvara, getPratyahara, doPadaVigraha, d_sthanamap, d_abhyatnamap, Cadi, Pradi, getSvaraVariations, Uryadi
 
 
 # Samjna checks
@@ -50,7 +50,7 @@ def isAnunasika(letter: str) -> bool:
         return True
 
 def isNipata(word: str) -> bool:
-    if word in Cadi + Pradi:
+    if word in Cadi + Pradi + Uryadi:
         return True
 
 def isPragruhya(word: str) -> bool:
