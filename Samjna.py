@@ -54,8 +54,9 @@ def isNipata(word: str) -> bool:
         return True
 
 def isPragruhya(word: str) -> bool:
+    # निपात एकाजनाङ्, ओत्
     l_word = doPadaVigraha(word)
-    if isNipata(word) and (len([i for i in l_word if i in getPratyahara('अच्')]) == 1 or l_word[-1] == 'ओ'):
+    if (isNipata(word) and len(word) == 1) or l_word[-1] in getPratyahara('ओत्'):
         return True
 
 def isPadam(expr: str) -> bool:

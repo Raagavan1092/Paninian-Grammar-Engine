@@ -211,4 +211,4 @@ def doVarnaMelana(l_varnas: list) -> str:  # do for pluta and tones like udātta
     return end_str
 
 if __name__ == '__main__':
-    print(getPratyahara('यर्', withSavarnas=False))
+    print(getSavarnas('ओ'))
